@@ -1,0 +1,68 @@
+resource "google_compute_forwarding_rule" "example" {
+  name                  = "${local.resource_prefix}-<name>-tcpilb"
+  ip_protocol           = "TCP"
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  port_range            = "443"
+  ...
+}
+
+# STEP 2 - Create a self-managed SSL certificate resource
+resource "google_compute_region_ssl_certificate" "example" {
+  
+  # OBS: SSL certificates cannot be updated after creation, meaning that in order to apply the
+  # specified configuration, Terraform will destroy the existing resource and create a
+  # replacement. Either omit the Instance Template name attribute, specify a partial name 
+  # with name_prefix, or use random_id resource.
+  name_prefix = "${local.resource_prefix}-<name>-sslcert-"
+  region      = "<REGION>"
+  private_key = file("<path/to/private.key>")
+  certificate = file("<path/to/certificate.crt>")
+
+  # To effectively use an SSL certificate resource with a Target HTTPS Proxy resource, 
+  # it's recommended to specify create_before_destroy in a lifecycle block.
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# STEP 3 - Associate an SSL certificate with a target proxy
+resource "google_compute_region_target_https_proxy" "example" {
+  region           = "<REGION>"
+  name             = "${local.resource_prefix}-<name>-httpsproxy"
+  ssl_certificates = [google_compute_region_ssl_certificate.example.id]
+  ...
+}
+
+# Create the load balancer front-end
+resource "google_compute_forwarding_rule" "example" {
+  name                  = "${local.resource_prefix}-<name>-httpsilb"
+  ip_protocol           = "TCP"
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  port_range            = "443"
+  target                = google_compute_forwarding_rule.example.id
+  ...
+}
+
+# STEP 4 - Update the DNS records to point to the load balancer's IP address
+#          Obs: In this example we are creating a managed zone and setting a DNS A record
+resource "google_dns_managed_zone" "sandbox" {
+  name     = "sandbox"
+  dns_name = "sandbox.wellsfargo.com."
+}
+
+# Create the example.sandbox.wellsfargo.com DNS A record
+resource "google_dns_record_set" "example" {
+  managed_zone = google_dns_managed_zone.sandbox.name
+  name         = "example.${google_dns_managed_zone.sandbox.dns_name}"
+  type         = "A"
+
+  # The forwarding rule resource IP is required
+  rrdatas      = [google_compute_forwarding_rule.example.ip_address]
+}
+
+# Create the backend service with session affinity
+resource "google_compute_region_backend_service" "example" {
+  name             = "${local.resource_prefix}-<name>-lbbackend"
+  session_affinity = "CLIENT_IP" 
+}
+
