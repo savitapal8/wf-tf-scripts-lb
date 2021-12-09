@@ -14,7 +14,7 @@ resource "google_compute_network" "ilb_network" {
   provider                = google-beta
   auto_create_subnetworks = false
   delete_default_routes_on_create   = true
-  mtu                     = 1440
+  mtu                     = 1500
 }
 
 # proxy-only subnet
@@ -97,7 +97,7 @@ resource "google_compute_region_backend_service" "default" {
   protocol              = "HTTP"
   load_balancing_scheme = "INTERNAL_MANAGED"
   timeout_sec           = 10
-  health_checks         = [google_compute_region_health_check.default.id]
+  #health_checks         = [google_compute_region_health_check.default.id]
   backend {
     group           = google_compute_region_instance_group_manager.mig.instance_group
     balancing_mode  = "UTILIZATION"
