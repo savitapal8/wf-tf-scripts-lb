@@ -10,14 +10,16 @@ provider "google-beta"{
 
 # VPC
 resource "google_compute_network" "ilb_network" {
-  name                    = "l7-ilb-network"
+  name                    = "my-dev-appid-strg-demolb-network"
   provider                = google-beta
   auto_create_subnetworks = false
+  delete_default_routes   = true
+  mtu                     = 1440
 }
 
 # proxy-only subnet
 resource "google_compute_subnetwork" "proxy_subnet" {
-  name          = "l7-ilb-proxy-subnet"
+  name          = "my-dev-appid-strg-demoproxylb-subnet"
   provider      = google-beta
   ip_cidr_range = "10.0.0.0/24"
   region        = "europe-west1"
@@ -28,7 +30,7 @@ resource "google_compute_subnetwork" "proxy_subnet" {
 
 # backed subnet
 resource "google_compute_subnetwork" "ilb_subnet" {
-  name          = "l7-ilb-subnet"
+  name          = "my-dev-appid-strg-demolb-subnet"
   provider      = google-beta
   ip_cidr_range = "10.0.1.0/24"
   region        = "europe-west1"
@@ -37,7 +39,7 @@ resource "google_compute_subnetwork" "ilb_subnet" {
 
 # forwarding rule
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
-  name                  = "l7-ilb-forwarding-rule-httpsilb"
+  name                  = "my-dev-appid-strg-demolb-httpsilb"
   provider              = google-beta
   region                = "europe-west1"
   depends_on            = [google_compute_subnetwork.proxy_subnet]
@@ -49,11 +51,21 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   network               = google_compute_network.ilb_network.id
   subnetwork            = google_compute_subnetwork.ilb_subnet.id
   network_tier          = "PREMIUM"
+  labels = {
+    owner = "hybridenv"
+    application_division = "pci"
+    application_name = "app1"
+    application_role = "auth"
+    au = "0223092"
+    gcp_region = "us" 
+    environment = "dev" 
+    created = "20211124" 
+  }
 }
 
 # http proxy
 resource "google_compute_region_target_http_proxy" "default" {
-  name     = "l7-ilb-target-http-proxy-httpsproxy"
+  name     = "my-dev-appid-strg-demolb-httpsproxy"
   provider = google-beta
   region   = "europe-west1"
   url_map  = google_compute_region_url_map.default.id
@@ -61,7 +73,7 @@ resource "google_compute_region_target_http_proxy" "default" {
 
 # url map
 resource "google_compute_region_url_map" "default" {
-  name            = "l7-ilb-regional-url-map"
+  name            = "my-dev-appid-strg-demolb-map"
   provider        = google-beta
   region          = "europe-west1"
   default_service = google_compute_region_backend_service.default.id
@@ -69,7 +81,7 @@ resource "google_compute_region_url_map" "default" {
 
 # backend service
 resource "google_compute_region_backend_service" "default" {
-  name                  = "l7-ilb-backend-subnet"
+  name                  = "my-dev-appid-strg-demobcklb-subnet"
   provider              = google-beta
   region                = "europe-west1"
   protocol              = "HTTP"
@@ -85,7 +97,7 @@ resource "google_compute_region_backend_service" "default" {
 
 # instance template
 resource "google_compute_instance_template" "instance_template" {
-  name         = "l7-ilb-mig-template"
+  name         = "my-dev-appid-strg-demomiglb-template"
   provider     = google-beta
   machine_type = "e2-small"
   tags         = ["http-server"]
@@ -133,7 +145,7 @@ resource "google_compute_instance_template" "instance_template" {
 
 # health check
 resource "google_compute_region_health_check" "default" {
-  name     = "l7-ilb-hc"
+  name     = "my-dev-appid-strg-demolb-hc"
   provider = google-beta
   region   = "europe-west1"
   http_health_check {
@@ -143,7 +155,7 @@ resource "google_compute_region_health_check" "default" {
 
 # MIG
 resource "google_compute_region_instance_group_manager" "mig" {
-  name     = "l7-ilb-mig1"
+  name     = "my-dev-appid-strg-demolb-mig1"
   provider = google-beta
   region   = "europe-west1"
   version {
@@ -156,7 +168,7 @@ resource "google_compute_region_instance_group_manager" "mig" {
 
 # allow all access from IAP and health check ranges
 resource "google_compute_firewall" "fw-iap" {
-  name          = "l7-ilb-fw-allow-iap-hc"
+  name          = "my-dev-appid-strg-demolb-fw1"
   provider      = google-beta
   direction     = "INGRESS"
   network       = google_compute_network.ilb_network.id
@@ -168,7 +180,7 @@ resource "google_compute_firewall" "fw-iap" {
 
 # allow http from proxy subnet to backends
 resource "google_compute_firewall" "fw-ilb-to-backends" {
-  name          = "l7-ilb-fw-allow-ilb-to-backends"
+  name          = "my-dev-appid-strg-demolb-fw2"
   provider      = google-beta
   direction     = "INGRESS"
   network       = google_compute_network.ilb_network.id
@@ -182,7 +194,7 @@ resource "google_compute_firewall" "fw-ilb-to-backends" {
 
 # test instance
 resource "google_compute_instance" "vm-test" {
-  name         = "l7-ilb-test-vm"
+  name         = "my-dev-appid-strg-demolb-vm"
   provider     = google-beta
   zone         = "europe-west1-b"
   machine_type = "e2-small"
