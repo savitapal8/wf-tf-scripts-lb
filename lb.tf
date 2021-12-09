@@ -26,6 +26,11 @@ resource "google_compute_subnetwork" "proxy_subnet" {
   purpose       = "INTERNAL_HTTPS_LOAD_BALANCER"
   role          = "ACTIVE"
   network       = google_compute_network.ilb_network.id
+  log_config {
+    aggregation_interval = "INTERVAL_10_MIN"
+    flow_sampling        = 1.0
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
 
 # backed subnet
@@ -35,6 +40,11 @@ resource "google_compute_subnetwork" "ilb_subnet" {
   ip_cidr_range = "10.0.1.0/24"
   region        = "europe-west1"
   network       = google_compute_network.ilb_network.id
+  log_config {
+    aggregation_interval = "INTERVAL_10_MIN"
+    flow_sampling        = 1.0
+    metadata             = "INCLUDE_ALL_METADATA"
+  }  
 }
 
 # forwarding rule
@@ -188,7 +198,7 @@ resource "google_compute_firewall" "fw-ilb-to-backends" {
   target_tags   = ["http-server"]
   allow {
     protocol = "tcp"
-    ports    = ["80", "443", "8080"]
+    ports    = ["443",]
   }
 }
 
