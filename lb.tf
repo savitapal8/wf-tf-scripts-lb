@@ -13,7 +13,7 @@ resource "google_compute_network" "ilb_network" {
   name                    = "my-dev-appid-strg-demolb-network"
   provider                = google-beta
   auto_create_subnetworks = false
-  delete_default_routes   = true
+  delete_default_routes_on_create   = true
   mtu                     = 1440
 }
 
