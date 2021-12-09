@@ -37,13 +37,14 @@ resource "google_compute_subnetwork" "ilb_subnet" {
 
 # forwarding rule
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
-  name                  = "l7-ilb-forwarding-rule"
+  name                  = "l7-ilb-forwarding-rule-httpsilb"
   provider              = google-beta
   region                = "europe-west1"
   depends_on            = [google_compute_subnetwork.proxy_subnet]
   ip_protocol           = "TCP"
   load_balancing_scheme = "INTERNAL_MANAGED"
-  port_range            = "80"
+  port_range            = "443"
+  all_ports             = true
   target                = google_compute_region_target_http_proxy.default.id
   network               = google_compute_network.ilb_network.id
   subnetwork            = google_compute_subnetwork.ilb_subnet.id
@@ -52,7 +53,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
 
 # http proxy
 resource "google_compute_region_target_http_proxy" "default" {
-  name     = "l7-ilb-target-http-proxy"
+  name     = "l7-ilb-target-http-proxy-httpsproxy"
   provider = google-beta
   region   = "europe-west1"
   url_map  = google_compute_region_url_map.default.id
