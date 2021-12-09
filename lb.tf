@@ -55,7 +55,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   depends_on            = [google_compute_subnetwork.proxy_subnet]
   ip_protocol           = "TCP"
   #load_balancing_scheme = "INTERNAL_MANAGED"
-  load_balancing_scheme = "EXTERNAL"
+  #load_balancing_scheme = "EXTERNAL"
   port_range            = "443"
   all_ports             = true
   target                = google_compute_region_target_http_proxy.default.id
