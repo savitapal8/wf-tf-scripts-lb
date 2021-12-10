@@ -171,10 +171,10 @@ resource "google_compute_region_instance_group_manager" "mig" {
   name     = "my-dev-appid-strg-demolb-mig1"
   provider = google-beta
   region   = "europe-west1"
-  version {
-    instance_template = google_compute_instance_template.instance_template.id
-    name              = "primary"
-  }
+  #version {
+   # instance_template = google_compute_instance_template.instance_template.id
+   # name              = "primary"
+  #}
   base_instance_name = "vm"
   target_size        = 2
 }
@@ -204,7 +204,7 @@ resource "google_compute_firewall" "fw-ilb-to-backends" {
     ports    = ["443",]
   }
 }
-
+/*
 # test instance
 resource "google_compute_instance" "vm-test" {
   name         = "my-dev-appid-strg-demolb-vm"
@@ -221,3 +221,4 @@ resource "google_compute_instance" "vm-test" {
     }
   }
 }
+*/
