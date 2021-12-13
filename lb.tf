@@ -50,16 +50,16 @@ resource "google_compute_subnetwork" "ilb_subnet" {
 
 # forwarding rule
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
-  name                  = "my-dev-appid-strg-demolb"#-httpsilb"
+  name                  = "my-dev-appid-strg-demolb-httpsilb"
   #name                  = "demolb-httpsilb"
   provider              = google-beta
   region                = "europe-west1"
   depends_on            = [google_compute_subnetwork.proxy_subnet]
   #ip_protocol           = "TCP"
-  #load_balancing_scheme = "INTERNAL_MANAGED"
-  load_balancing_scheme = "EXTERNAL"
-  port_range            =  "80" # "443"
-  all_ports             =  true #false
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  #load_balancing_scheme = "EXTERNAL"
+  port_range            =  "443"
+  all_ports             =  false
   target                = google_compute_region_target_https_proxy.default.id
   network               = google_compute_network.ilb_network.id
   subnetwork            = google_compute_subnetwork.ilb_subnet.id
@@ -79,7 +79,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
 # http proxy
 resource "google_compute_region_target_https_proxy" "default" {
   region           = "europe-west1"
-  name             = "my-dev-appid-strg-demolb"#-httpsproxy"
+  name             = "my-dev-appid-strg-demolb-httpsproxy"
   url_map          = google_compute_region_url_map.default.id
   ssl_certificates = [google_compute_region_ssl_certificate.default.id]
 }
@@ -87,7 +87,7 @@ resource "google_compute_region_target_https_proxy" "default" {
 # ssl certificate
 resource "google_compute_region_ssl_certificate" "default" {
   region      = "europe-west1"
-  name        = "my-dev-appid-strg-demolb"#-sslcert"
+  name        = "my-dev-appid-strg-demolb-sslcert"
   private_key = file("certs/keystore.key")
   certificate = file("certs/certificate.crt")
 }
@@ -123,7 +123,7 @@ resource "google_compute_region_backend_service" "default" {
   protocol              = "HTTP"
   load_balancing_scheme = "INTERNAL_MANAGED"
   timeout_sec           = 10
-  health_checks         = null # [google_compute_region_health_check.default.id]
+  health_checks         = [google_compute_region_health_check.default.id]
   backend {
     group           = google_compute_region_instance_group_manager.mig.instance_group
     balancing_mode  = "UTILIZATION"
