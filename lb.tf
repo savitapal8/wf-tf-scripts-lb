@@ -26,11 +26,11 @@ resource "google_compute_subnetwork" "proxy_subnet" {
   purpose       = "INTERNAL_HTTPS_LOAD_BALANCER"
   role          = "ACTIVE"
   network       = google_compute_network.ilb_network.id
-  #log_config {
-  #  aggregation_interval = "INTERVAL_10_MIN"
-  #  flow_sampling        = 1.0
-  #  metadata             = "INCLUDE_ALL_METADATA"
-  #}
+  log_config {
+    aggregation_interval = "INTERVAL_10_MIN"
+    flow_sampling        = 1.0
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
 
 # backed subnet
@@ -54,11 +54,12 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   provider              = google-beta
   region                = "europe-west1"
   depends_on            = [google_compute_subnetwork.proxy_subnet]
-  load_balancing_scheme = "INTERNAL"  #_MANAGED"
+  #ip_protocol           = "TCP"
+  load_balancing_scheme = "INTERNAL_MANAGED"
   #load_balancing_scheme = "EXTERNAL"
   port_range            =  "443"
   all_ports             = false
-  target                = google_compute_region_target_http_proxy.default.id
+  target                = google_compute_region_target_https_proxy.default.id
   network               = google_compute_network.ilb_network.id
   subnetwork            = google_compute_subnetwork.ilb_subnet.id
   network_tier          = "PREMIUM"
@@ -75,12 +76,19 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
 }
 
 # http proxy
-resource "google_compute_region_target_http_proxy" "default" {
-  name     = "my-dev-appid-strg-demolb-httpsproxy"
-  #name     = "my-dev-appid-strg-demolb"
-  provider = google-beta
-  region   = "europe-west1"
-  url_map  = google_compute_region_url_map.default.id
+resource "google_compute_region_target_https_proxy" "default" {
+  region           = "europe-west1"
+  name             = "my-dev-appid-strg-demolb-httpsproxy"
+  url_map          = google_compute_region_url_map.default.id
+  ssl_certificates = [google_compute_region_ssl_certificate.default.id]
+}
+
+# ssl certificate
+resource "google_compute_region_ssl_certificate" "default" {
+  region      = "europe-west1"
+  name        = "my-dev-appid-strg-demolb-sslcert"
+  private_key = file("certs/keystore.key")
+  certificate = file("certs/certificate.crt")
 }
 
 # url map
@@ -89,6 +97,20 @@ resource "google_compute_region_url_map" "default" {
   provider        = google-beta
   region          = "europe-west1"
   default_service = google_compute_region_backend_service.default.id
+  
+   host_rule {
+    hosts        = ["test.example.com"]
+    path_matcher = "allpaths"
+  }
+
+  path_matcher {
+    name            = "allpaths"
+    default_service = google_compute_region_backend_service.default.id
+
+    path_rule {
+      paths   = ["/*"]
+      service = google_compute_region_backend_service.default.id
+    }
 }
 
 # backend service
