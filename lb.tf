@@ -50,7 +50,7 @@ resource "google_compute_subnetwork" "ilb_subnet" {
 
 # forwarding rule
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
-  name                  = "my-dev-appid-strg-demolb-httpsilb"
+  name                  = "my-dev-appid-strg-demolb1-httpsilb"
   #name                  = "demolb-httpsilb"
   provider              = google-beta
   region                = "europe-west1"
@@ -79,7 +79,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
 # http proxy
 resource "google_compute_region_target_https_proxy" "default" {
   region           = "europe-west1"
-  name             = "my-dev-appid-strg-demolb-httpsproxy"
+  name             = "my-dev-appid-strg-demolb1-httpsproxy"
   url_map          = google_compute_region_url_map.default.id
   ssl_certificates = [google_compute_region_ssl_certificate.default.id]
 }
@@ -87,14 +87,14 @@ resource "google_compute_region_target_https_proxy" "default" {
 # ssl certificate
 resource "google_compute_region_ssl_certificate" "default" {
   region      = "europe-west1"
-  name        = "my-dev-appid-strg-demolb-sslcert"
+  name        = "my-dev-appid-strg-demolb1-sslcert"
   private_key = file("certs/keystore.key")
   certificate = file("certs/certificate.crt")
 }
 
 # url map
 resource "google_compute_region_url_map" "default" {
-  name            = "my-dev-appid-strg-demolb-map"
+  name            = "my-dev-appid-strg-demolb1-map"
   provider        = google-beta
   region          = "europe-west1"
   default_service = google_compute_region_backend_service.default.id
@@ -117,7 +117,7 @@ resource "google_compute_region_url_map" "default" {
 
 # backend service
 resource "google_compute_region_backend_service" "default" {
-  name                  = "my-dev-appid-strg-demobcklb-subnet"
+  name                  = "my-dev-appid-strg-demobcklb1-subnet"
   provider              = google-beta
   region                = "europe-west1"
   protocol              = "HTTP"
@@ -133,7 +133,7 @@ resource "google_compute_region_backend_service" "default" {
 
 # instance template
 resource "google_compute_instance_template" "instance_template" {
-  name         = "my-dev-appid-strg-demomiglb-template"
+  name         = "my-dev-appid-strg-demomiglb1-template"
   provider     = google-beta
   machine_type = "e2-small"
   tags         = ["http-server"]
@@ -181,7 +181,7 @@ resource "google_compute_instance_template" "instance_template" {
 
 # health check
 resource "google_compute_region_health_check" "default" {
-  name     = "my-dev-appid-strg-demolb-hc"
+  name     = "my-dev-appid-strg-demolb1-hc"
   provider = google-beta
   region   = "europe-west1"
   http_health_check {
@@ -191,7 +191,7 @@ resource "google_compute_region_health_check" "default" {
 
 # MIG
 resource "google_compute_region_instance_group_manager" "mig" {
-  name     = "my-dev-appid-strg-demolb-mig1"
+  name     = "my-dev-appid-strg-demolb1-mig1"
   provider = google-beta
   region   = "europe-west1"
   version {
@@ -204,7 +204,7 @@ resource "google_compute_region_instance_group_manager" "mig" {
 
 # allow all access from IAP and health check ranges
 resource "google_compute_firewall" "fw-iap" {
-  name          = "my-dev-appid-strg-demolb-fw1"
+  name          = "my-dev-appid-strg-demolb1-fw1"
   provider      = google-beta
   direction     = "INGRESS"
   network       = google_compute_network.ilb_network.id
@@ -216,7 +216,7 @@ resource "google_compute_firewall" "fw-iap" {
 
 # allow http from proxy subnet to backends
 resource "google_compute_firewall" "fw-ilb-to-backends" {
-  name          = "my-dev-appid-strg-demolb-fw2"
+  name          = "my-dev-appid-strg-demolb1-fw2"
   provider      = google-beta
   direction     = "INGRESS"
   network       = google_compute_network.ilb_network.id
