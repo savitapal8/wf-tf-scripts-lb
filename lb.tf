@@ -87,7 +87,7 @@ resource "google_compute_region_target_https_proxy" "default" {
 # ssl certificate
 resource "google_compute_region_ssl_certificate" "default" {
   region      = "europe-west1"
-  name        = "my-dev-appid-strg-demolb-sslcert"
+  name        = "my-dev-appid-strg-demolb-sslcert-"
   private_key = file("certs/keystore.key")
   certificate = file("certs/certificate.crt")
 }
