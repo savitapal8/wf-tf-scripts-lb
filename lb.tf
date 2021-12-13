@@ -111,6 +111,7 @@ resource "google_compute_region_url_map" "default" {
       paths   = ["/*"]
       service = google_compute_region_backend_service.default.id
     }
+ }
 }
 
 # backend service
