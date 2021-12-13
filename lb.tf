@@ -26,11 +26,11 @@ resource "google_compute_subnetwork" "proxy_subnet" {
   purpose       = "INTERNAL_HTTPS_LOAD_BALANCER"
   role          = "ACTIVE"
   network       = google_compute_network.ilb_network.id
-  log_config {
-    aggregation_interval = "INTERVAL_10_MIN"
-    flow_sampling        = 1.0
-    metadata             = "INCLUDE_ALL_METADATA"
-  }
+  #log_config {
+  #  aggregation_interval = "INTERVAL_10_MIN"
+  #  flow_sampling        = 1.0
+  #  metadata             = "INCLUDE_ALL_METADATA"
+  #}
 }
 
 # backed subnet
