@@ -54,7 +54,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   provider              = google-beta
   region                = "europe-west1"
   depends_on            = [google_compute_subnetwork.proxy_subnet]
-  load_balancing_scheme = "INTERNAL_MANAGED"
+  load_balancing_scheme = "INTERNAL"  #_MANAGED"
   #load_balancing_scheme = "EXTERNAL"
   port_range            =  "443"
   all_ports             = false
